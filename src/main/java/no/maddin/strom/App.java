@@ -32,34 +32,36 @@ public class App {
     }
 
     private void start() throws IOException {
-        try (InfluxDB influxDB = InfluxDBFactory.connect("http://172.18.0.2:8086", "root", "5up3rS3cr3t")) {
+        try (InfluxDB influxDB = InfluxDBFactory.connect("http://localhost:8086", "root", "5up3rS3cr3t")) {
             String dbName = "strom";
             influxDB.createDatabase(dbName);
             influxDB.setDatabase(dbName);
-            String rpName = "aRetentionPolicy";
-            influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
-            influxDB.setRetentionPolicy(rpName);
+//            String rpName = "aRetentionPolicy";
+//            influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
+//            influxDB.setRetentionPolicy(rpName);
 
-            influxDB.enableBatch(BatchOptions.DEFAULTS);
+//            influxDB.enableBatch(BatchOptions.DEFAULTS);
 
 
             new CsvValueReader(Path.of(readerDirectoryPath)).process(d -> processData(d, influxDB));
+            influxDB.flush();
         }
     }
 
     private void processData(StromData data, InfluxDB influxDB) {
-        int hour = 1;
+        LocalDateTime ldt0 = LocalDateTime.of(data.getRowDate(), LocalTime.of(0, 0));
         for (Double value : data.getIntervalValues().values()) {
-            LocalDateTime ldt0 = LocalDateTime.of(data.getRowDate(), LocalTime.of(hour, 0));
-            LocalDateTime ldt1 = LocalDateTime.of(data.getRowDate(), LocalTime.of(++hour, 0));
-            influxDB.write(Point.measurement("strom")
-                .time(toLongTime(ldt1), TimeUnit.HOURS)
+            LocalDateTime ldt1 = ldt0.plusHours(1);
+            Point point = Point.measurement("strom")
+                .time(toLongTime(ldt1), TimeUnit.MILLISECONDS)
                 .addField("start_interval", toLongTime(ldt0))
                 .addField("end_interval", toLongTime(ldt1))
                 .addField("value", value)
-                .build());
+                .build();
+            influxDB.write(point);
 
-            log.info("processing dataset: " + data);
+            log.info("processing dataset: " + point);
+            ldt0 = ldt1;
         }
     }
 
