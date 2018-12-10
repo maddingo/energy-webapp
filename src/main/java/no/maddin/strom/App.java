@@ -3,18 +3,25 @@ package no.maddin.strom;
 
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
-import org.influxdb.BatchOptions;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.Point;
-import org.influxdb.dto.Query;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.Authenticator;
+import java.net.CookieManager;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Builder
@@ -22,16 +29,66 @@ import java.util.concurrent.TimeUnit;
 public class App {
 
     private String readerDirectoryPath;
+    private String username;
+    private String password;
 
-    public static void main( String[] args ) throws Exception {
+    public static void main(String[] args) throws Exception {
 
         App.builder()
             .readerDirectoryPath("target/read-path")
+            .username(args[0])
+            .password(args[1])
             .build()
+            .download()
             .start();
     }
 
-    private void start() throws IOException {
+    // https://www.lysenett.no/nedlasting-av-stromforbruk/category15207.html?meter=707057500070545570&year=2017-2018&month=1-12&day=01-31
+    // https://www.lysenett.no/streamhourmeterexport.php
+    //     POST
+    //     action=streamfiles&goto-if-warnings=https%3A%2F%2Fwww.lysenett.no%2Fnedlasting-av-stromforbruk%2Fcategory15207.html&fromdate=01.01.2017&todate=31.12.2018&exportformat=1&entityIdList%5B%5D=SP-134342-001-1
+    private App download() throws URISyntaxException, IOException, InterruptedException {
+        CookieManager cookieHandler = new CookieManager();
+        HttpClient client = HttpClient.newBuilder()
+//            .authenticator(new Authenticator() {
+//            })
+            .cookieHandler(cookieHandler)
+            .followRedirects(HttpClient.Redirect.ALWAYS)
+            .build();
+
+        // Start page
+        HttpRequest minsideRequest = HttpRequest.newBuilder(new URI("https://www.lysenett.no/minside/"))
+            .GET()
+            .build();
+        HttpResponse<String> minsideResponse = client.send(minsideRequest, HttpResponse.BodyHandlers.ofString());
+/*
+X-Prototype-Version: 1.7
+X-Requested-With: XMLHttpRequest
+ */
+        // authenticate
+        HttpRequest authenticateRequest = HttpRequest.newBuilder(new URI("https://www.lysenett.no/restendpoint/lyse.authentication/v1/authenticate"))
+            .POST(HttpRequest.BodyPublishers.ofByteArray(authenticationPayload()))
+            .setHeader("X-Prototpye-Version", "1.7")
+            .setHeader("X-Requested-With", "XMLHttpRequest")
+            .setHeader("Referer", "https://www.lysenett.no/minside/")
+            .build();
+        HttpResponse<String> authResponse = client.send(authenticateRequest, HttpResponse.BodyHandlers.ofString());
+
+        HttpRequest downloadRequest = HttpRequest.newBuilder(new URI("https://www.lysenett.no/maleravlesning/category15171.html"))
+            .build();
+        HttpResponse<String> response = client.send(
+            downloadRequest,
+            HttpResponse.BodyHandlers.ofString()
+        );
+        return this;
+    }
+
+    private byte[] authenticationPayload() {
+        return ("{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}").getBytes();
+    }
+
+    private App start() throws IOException {
+        // start a DB with
         try (InfluxDB influxDB = InfluxDBFactory.connect("http://localhost:8086", "root", "5up3rS3cr3t")) {
             String dbName = "strom";
             influxDB.createDatabase(dbName);
@@ -46,6 +103,7 @@ public class App {
             new CsvValueReader(Path.of(readerDirectoryPath)).process(d -> processData(d, influxDB));
             influxDB.flush();
         }
+        return this;
     }
 
     private void processData(StromData data, InfluxDB influxDB) {
