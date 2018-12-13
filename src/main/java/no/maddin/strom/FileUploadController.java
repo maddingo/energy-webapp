@@ -1,20 +1,27 @@
-package no.maddin.strom.web;
+package no.maddin.strom;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.annotation.security.PermitAll;
+import javax.annotation.security.DeclareRoles;
+import javax.annotation.security.RolesAllowed;
 
 @Slf4j
-@RestController
-@PermitAll
+@Controller
+@DeclareRoles("USER")
+@RolesAllowed("*")
 public class FileUploadController {
 
-    @PostMapping("/upload")
+    @GetMapping("/")
+    public String index(Model model) {
+        return "upload";
+    }
+
+    @PostMapping("/")
     public String handleFileUpload(@RequestParam("file") MultipartFile file,
                                    RedirectAttributes redirectAttributes) {
 

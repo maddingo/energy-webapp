@@ -1,0 +1,29 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+</head>
+<body>
+
+<div class="container">
+    <div th:if="${message}">
+        <h2 th:text="${message}"/>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" action="/">
+        <div class="form-group">
+            <label for="file">File to upload</label>
+            <input type="file" class="form-control" id="file" name="file" />
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </div>
+    </form>
+
+    <div>
+        <ul>
+            <li th:each="file : ${files}">
+                <a th:href="${file}" th:text="${file}" />
+            </li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>
