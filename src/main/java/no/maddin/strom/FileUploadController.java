@@ -3,10 +3,15 @@ package no.maddin.strom.web;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.annotation.security.PermitAll;
+
 @Slf4j
+@RestController
+@PermitAll
 public class FileUploadController {
 
     @PostMapping("/upload")
