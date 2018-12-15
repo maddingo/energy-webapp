@@ -1,16 +1,13 @@
 package no.maddin.strom;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.el.stream.Optional;
-import org.influxdb.InfluxDB;
-import org.influxdb.InfluxDBFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.task.support.ExecutorServiceAdapter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
-import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -19,7 +16,6 @@ import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 
 @Slf4j
@@ -29,8 +25,14 @@ import java.util.concurrent.ExecutorService;
 public class FileUploadController {
 
     private ExecutorService saveService = java.util.concurrent.Executors.newSingleThreadExecutor();
+
+    @Value("${strom.db_url}")
     private String dbUrl;
+
+    @Value("${strom.db_user}")
     private String dbUser;
+
+    @Value("${strom.db_password}")
     private String dbPassword;
 
     @GetMapping("/")
