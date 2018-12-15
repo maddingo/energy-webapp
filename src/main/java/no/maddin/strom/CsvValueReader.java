@@ -2,8 +2,10 @@ package no.maddin.strom;
 
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
+import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -13,22 +15,15 @@ import java.util.function.Consumer;
 
 @Slf4j
 public class CsvValueReader {
-    private final Path readerDirectoryPath;
+    private final Path dataFile;
 
-    public CsvValueReader(Path readerDirectoryPath) {
-        this.readerDirectoryPath = readerDirectoryPath;
+    public CsvValueReader(Path dataFile) {
+        this.dataFile = dataFile;
     }
 
-    public void process(Consumer<StromData> datasetConsumer) throws IOException {
-        Files.walk(readerDirectoryPath)
-            .filter(this::filterCSV)
-            .forEach(f -> readFile(f, datasetConsumer));
+    public void process(Consumer<StromData> datasetConsumer) {
+        readFile(this.dataFile, datasetConsumer);
 
-    }
-
-    private boolean filterCSV(Path path) {
-        String fileName = path.getFileName().toFile().getName();
-        return fileName.endsWith(".csv");
     }
 
     @SneakyThrows

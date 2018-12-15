@@ -7,18 +7,14 @@ import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.Point;
 
-import javax.net.ssl.SSLContext;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.Authenticator;
 import java.net.CookieManager;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.Charset;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -28,19 +24,24 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class App {
 
-    private String readerDirectoryPath;
-    private String username;
-    private String password;
+    private final File dataFile;
+    private String downloadUser;
+    private String downloadPassword;
+    private final String dbUrl;
+    private final String dbUser;
+    private final String dbPassword;
 
     public static void main(String[] args) throws Exception {
 
         App.builder()
-            .readerDirectoryPath("target/read-path")
-            .username(args[0])
-            .password(args[1])
+            .downloadUser(args[0])
+            .downloadPassword(args[1])
+            .dbUrl("http://localhost:8086")
+            .dbUser("root")
+            .dbPassword("5up3rS3cr3t")
             .build()
             .download()
-            .start();
+            .save();
     }
 
     // https://www.lysenett.no/nedlasting-av-stromforbruk/category15207.html?meter=707057500070545570&year=2017-2018&month=1-12&day=01-31
@@ -84,12 +85,12 @@ X-Requested-With: XMLHttpRequest
     }
 
     private byte[] authenticationPayload() {
-        return ("{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}").getBytes();
+        return ("{\"username\":\"" + downloadUser + "\",\"password\":\"" + downloadPassword + "\"}").getBytes();
     }
 
-    private App start() throws IOException {
+    public void save() throws IOException {
         // start a DB with
-        try (InfluxDB influxDB = InfluxDBFactory.connect("http://localhost:8086", "root", "5up3rS3cr3t")) {
+        try (InfluxDB influxDB = InfluxDBFactory.connect(dbUrl, dbUser, dbPassword)) {
             String dbName = "strom";
             influxDB.createDatabase(dbName);
             influxDB.setDatabase(dbName);
@@ -100,10 +101,9 @@ X-Requested-With: XMLHttpRequest
 //            influxDB.enableBatch(BatchOptions.DEFAULTS);
 
 
-            new CsvValueReader(Path.of(readerDirectoryPath)).process(d -> processData(d, influxDB));
+            new CsvValueReader(dataFile.toPath()).process(d -> processData(d, influxDB));
             influxDB.flush();
         }
-        return this;
     }
 
     private void processData(StromData data, InfluxDB influxDB) {
