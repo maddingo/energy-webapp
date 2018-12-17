@@ -24,6 +24,7 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <projectId>set-with-D</projectId>
+        <useGCR>true</useGCR>
     </properties>
     
     <dependencies>
@@ -128,9 +129,11 @@
                         <phase>package</phase>
                         <goals><goal>build</goal></goals>
                         <configuration>
-                            <contextDirectory>src/main/docker</contextDirectory>
+                            <!--contextDirectory>src/main/docker</contextDirectory-->
+                            <pullNewerImage>false</pullNewerImage>
                             <repository>gcr.io/${projectId}/${project.artifactId}</repository>
                             <tag>${project.version}</tag>
+                            <googleContainerRegistryEnabled>${useGCR}</googleContainerRegistryEnabled>
                             <buildArgs>
                                 <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
                             </buildArgs>
