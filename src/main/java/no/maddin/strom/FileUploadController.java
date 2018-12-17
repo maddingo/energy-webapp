@@ -38,7 +38,7 @@ public class FileUploadController {
     @GetMapping("/")
     public String index(HttpServletRequest req, Model model) {
         java.util.Optional.ofNullable(req.getSession(false)).ifPresent(httpSession -> model.addAttribute("csrf_token", httpSession.getAttribute(HttpSessionCsrfTokenRepository.class.getName().concat(".CSRF_TOKEN"))));
-        return "upload";
+            return "upload";
     }
 
     @PostMapping("/")
