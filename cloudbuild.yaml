@@ -1,5 +1,5 @@
 steps:
     - name: 'gcr.io/cloud-builders/mvn'
-      args: ['install']
-    - name: 'gcr.io/cloudbuilders/docker'
-      args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/energy-web', 'src/main/docker' ]
+      args: ['verify', '-DprojectId=$PROJECT_ID']
+#    - name: 'gcr.io/cloudbuilders/docker'
+#      args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/energy-web', 'src/main/docker' ]
