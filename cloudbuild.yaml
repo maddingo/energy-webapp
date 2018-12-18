@@ -1,5 +1,5 @@
 steps:
     - name: 'maven:3.6.0-jdk-11'
-      args: ['mvn', '-B', '-q', 'deploy', '-DprojectId=$PROJECT_ID']
+      args: ['mvn', '-B', '-q', 'verify', 'dockerfile:push', '-DprojectId=$PROJECT_ID']
 #    - name: 'gcr.io/cloudbuilders/docker'
 #      args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/energy-web', 'src/main/docker' ]
