@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,6 +17,11 @@ import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ExecutorService;
 
 @Slf4j
@@ -34,6 +40,9 @@ public class FileUploadController {
 
     @Value("${strom.db_password}")
     private String dbPassword;
+
+    @Value("${file.upload-dir}")
+    private String fileUploadDir;
 
     @GetMapping("/")
     public String index(HttpServletRequest req, Model model) {
@@ -63,15 +72,23 @@ public class FileUploadController {
     }
 
     private void processFile(MultipartFile file) {
+
         try {
-            App.builder()
-                .dataFile(file.getResource().getFile())
-                .dbUrl(dbUrl)
-                .dbUser(dbUser)
-                .dbPassword(dbPassword)
-                .build()
-                .save();
-        } catch(IOException ex) {
+            Path tempFile = Files.createTempFile("download", ".tmp");
+            try (
+                InputStream in = file.getInputStream();
+                OutputStream out = Files.newOutputStream(tempFile, StandardOpenOption.DELETE_ON_CLOSE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)
+            ) {
+                FileCopyUtils.copy(in, out);
+                App.builder()
+                    .dataFile(tempFile.toFile())
+                    .dbUrl(dbUrl)
+                    .dbUser(dbUser)
+                    .dbPassword(dbPassword)
+                    .build()
+                    .save();
+            }
+        } catch (IOException ex) {
             log.warn("Processing file " + file.getOriginalFilename(), ex);
         }
     }
