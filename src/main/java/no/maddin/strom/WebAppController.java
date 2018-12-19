@@ -33,7 +33,7 @@ import java.util.concurrent.ExecutorService;
 @Controller
 @DeclareRoles("USER")
 @RolesAllowed("*")
-public class FileUploadController {
+public class WebAppController {
 
     private ExecutorService saveService = java.util.concurrent.Executors.newSingleThreadExecutor();
 
@@ -57,12 +57,12 @@ public class FileUploadController {
 
     @PostMapping("/")
     public String handleFileUpload(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
-
-        storeFile(file);
-        redirectAttributes.addFlashAttribute("message",
-            "You successfully uploaded " + file.getOriginalFilename() + "!");
-        redirectAttributes.addFlashAttribute("message-type", "text-success");
-
+        if (!file.isEmpty()) {
+            storeFile(file);
+            redirectAttributes.addFlashAttribute("message",
+                "Processing " + file.getOriginalFilename());
+            redirectAttributes.addFlashAttribute("message_type", "text-info");
+        }
         return "redirect:/";
     }
 
@@ -72,19 +72,24 @@ public class FileUploadController {
             QueryResult queryResult = influxDB.query(new Query("DROP SERIES FROM /.*/", "strom"));
             if (queryResult.hasError()) {
                 redirectAttributes.addFlashAttribute("message", queryResult.getError());
-                redirectAttributes.addFlashAttribute("message-type", "text-danger");
+                redirectAttributes.addFlashAttribute("message_type", "text-danger");
             } else {
                 redirectAttributes.addFlashAttribute("message", "All data deleted");
-                redirectAttributes.addFlashAttribute("message-type", "text-success");
+                redirectAttributes.addFlashAttribute("message_type", "text-success");
             }
             influxDB.flush();
         } catch (InfluxDBException ex) {
             redirectAttributes.addFlashAttribute("message", ex.getMessage());
-            redirectAttributes.addFlashAttribute("message-type", "text-danger");
+            redirectAttributes.addFlashAttribute("message_type", "text-danger");
         }
 
 
         return "redirect:/";
+    }
+
+    @GetMapping("/about")
+    public String about() {
+        return "about";
     }
 
     @PreDestroy

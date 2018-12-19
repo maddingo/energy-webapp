@@ -1,0 +1,7 @@
+body > .container {
+    padding: 60px 15px 0;
+}
+
+#upload-message {
+    padding-top: 1em;
+}
