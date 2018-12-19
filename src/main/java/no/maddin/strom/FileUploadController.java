@@ -1,6 +1,10 @@
 package no.maddin.strom;
 
 import lombok.extern.slf4j.Slf4j;
+import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBFactory;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.stereotype.Controller;
@@ -32,13 +36,13 @@ public class FileUploadController {
 
     private ExecutorService saveService = java.util.concurrent.Executors.newSingleThreadExecutor();
 
-    @Value("${strom.db_url}")
+    @Value("${strom.db_url :? 'http://localhost:8083'}")
     private String dbUrl;
 
-    @Value("${strom.db_user}")
+    @Value("${strom.db_user :? 'root'}")
     private String dbUser;
 
-    @Value("${strom.db_password}")
+    @Value("${strom.db_password :? '5up3rS3cr3t'}")
     private String dbPassword;
 
     @Value("${file.upload-dir}")
@@ -57,6 +61,22 @@ public class FileUploadController {
         storeFile(file);
         redirectAttributes.addFlashAttribute("message",
             "You successfully uploaded " + file.getOriginalFilename() + "!");
+
+        return "redirect:/";
+    }
+
+    @GetMapping("/deleteAll")
+    public String deleteAll(RedirectAttributes redirectAttributes) {
+        try (InfluxDB influxDB = InfluxDBFactory.connect(dbUrl, dbUser, dbPassword)) {
+            QueryResult queryResult = influxDB.query(new Query("DROP SERIES FROM /.*/", "strom"));
+            if (queryResult.hasError()) {
+                redirectAttributes.addFlashAttribute("message", queryResult.getError());
+            } else {
+                redirectAttributes.addFlashAttribute("message", "All data deleted");
+            }
+            influxDB.flush();
+        }
+
 
         return "redirect:/";
     }
