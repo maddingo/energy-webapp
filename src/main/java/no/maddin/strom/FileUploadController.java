@@ -2,6 +2,7 @@ package no.maddin.strom;
 
 import lombok.extern.slf4j.Slf4j;
 import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBException;
 import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
@@ -36,13 +37,13 @@ public class FileUploadController {
 
     private ExecutorService saveService = java.util.concurrent.Executors.newSingleThreadExecutor();
 
-    @Value("${strom.db_url :? 'http://localhost:8083'}")
+    @Value("${strom.db_url:http://localhost:8083}")
     private String dbUrl;
 
-    @Value("${strom.db_user :? 'root'}")
+    @Value("${strom.db_user:root}")
     private String dbUser;
 
-    @Value("${strom.db_password :? '5up3rS3cr3t'}")
+    @Value("${strom.db_password:5up3rS3cr3t}")
     private String dbPassword;
 
     @Value("${file.upload-dir}")
@@ -55,12 +56,12 @@ public class FileUploadController {
     }
 
     @PostMapping("/")
-    public String handleFileUpload(@RequestParam("file") MultipartFile file,
-                                   RedirectAttributes redirectAttributes) {
+    public String handleFileUpload(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
 
         storeFile(file);
         redirectAttributes.addFlashAttribute("message",
             "You successfully uploaded " + file.getOriginalFilename() + "!");
+        redirectAttributes.addFlashAttribute("message-type", "text-success");
 
         return "redirect:/";
     }
@@ -71,10 +72,15 @@ public class FileUploadController {
             QueryResult queryResult = influxDB.query(new Query("DROP SERIES FROM /.*/", "strom"));
             if (queryResult.hasError()) {
                 redirectAttributes.addFlashAttribute("message", queryResult.getError());
+                redirectAttributes.addFlashAttribute("message-type", "text-danger");
             } else {
                 redirectAttributes.addFlashAttribute("message", "All data deleted");
+                redirectAttributes.addFlashAttribute("message-type", "text-success");
             }
             influxDB.flush();
+        } catch (InfluxDBException ex) {
+            redirectAttributes.addFlashAttribute("message", ex.getMessage());
+            redirectAttributes.addFlashAttribute("message-type", "text-danger");
         }
 
 

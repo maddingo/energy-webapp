@@ -1,29 +1,54 @@
-<html xmlns:th="http://www.thymeleaf.org">
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
 
 <div class="container">
-    <div th:if="${message}">
-        <h2 th:text="${message}"/>
-    </div>
-
-    <form method="POST" enctype="multipart/form-data" action="/">
-        <div class="form-group">
-            <label for="file">File to upload</label>
-            <input type="file" class="form-control" id="file" name="file" />
-            <button type="submit" class="btn btn-primary">Upload</button>
-            <input type="hidden" name="_csrf" th:text="${csrf_token}">
+    <div class="row">
+        <div class="col-md-12">
+            <nav class="navbar">
+                <p class="navbar-text navbar-right">Signed in as User</p>
+            </nav>
         </div>
-    </form>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="page-header">
+                <h1>Upload Lyse data <small>Strømmåler data</small></h1>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-1">
+            <a href="/about.html">About</a>
+        </div>
+        <div class="col-md-1">
+            <a href="/deleteAll" title="Delete All">Delete</a>
+        </div>
+        <div class="col-md-10">&nbsp;</div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <form method="POST" enctype="multipart/form-data" action="/">
+                <div class="form-group">
+                    <label for="file">File to upload</label>
+                    <input type="file" class="form-control" id="file" name="file" />
+                    <input type="hidden" name="_csrf" th:text="${csrf_token}">
+                </div>
+                <button type="submit" class="btn btn-primary btn-default">Upload</button>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div th:if="${message}" th:class="${message-type}">
+                <p th:text="${message}"/>
+            </div>
 
-    <div>
-        <ul>
-            <li>
-                <a href="/deleteAll">Delete all</a>
-            </li>
-        </ul>
+        </div>
     </div>
 </div>
 </body>
